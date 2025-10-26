@@ -321,6 +321,31 @@ with st.container():
         st.session_state.ken_burns_type = ken_burns_type
         st.session_state.ken_burns_intensity = ken_burns_intensity
 
+    st.markdown("---")
+
+    # クロスフェード遷移設定
+    use_crossfade = st.checkbox(
+        "シーン間にクロスフェード遷移を追加",
+        value=True,
+        help="シーンとシーンの切り替わりを滑らかにします"
+    )
+
+    if use_crossfade:
+        crossfade_duration = st.slider(
+            "クロスフェード時間（秒）",
+            min_value=0.3,
+            max_value=2.0,
+            value=0.8,
+            step=0.1,
+            help="シーン間の重なり時間"
+        )
+    else:
+        crossfade_duration = 0.0
+
+    # 設定を保存
+    st.session_state.use_crossfade = use_crossfade
+    st.session_state.crossfade_duration = crossfade_duration
+
 # 次へ進むボタン
 st.markdown("---")
 

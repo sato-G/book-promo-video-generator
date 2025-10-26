@@ -82,7 +82,9 @@ def render_video(
     subtitle_colors: tuple = ("FFFFFF", "00FFFF"),
     use_ken_burns: bool = False,
     ken_burns_type: str = "random",
-    ken_burns_intensity: float = 1.15
+    ken_burns_intensity: float = 1.15,
+    use_crossfade: bool = False,
+    crossfade_duration: float = 0.8
 ) -> Dict[str, Any]:
     """
     ストーリーボードから動画を作成（字幕付き）
@@ -166,9 +168,59 @@ def render_video(
 
         clips.append(image_clip)
 
-    # 全シーンを連結
-    print("   全シーンを連結中...")
-    final_clip = concatenate_videoclips(clips, method="compose")
+    # 全シーンを連結（クロスフェードあり/なし）
+    if use_crossfade and len(clips) > 1:
+        print(f"   全シーンを連結中（クロスフェード: {crossfade_duration}秒）...")
+
+        # クロスフェードで連結
+        crossfaded_clips = []
+
+        for i, clip in enumerate(clips):
+            if i == 0:
+                # 最初のクリップはそのまま追加
+                crossfaded_clips.append(clip)
+            else:
+                # 前のクリップの最後とクロスフェード
+                # 現在のクリップにフェードイン効果
+                clip_with_fadein = clip.with_effects([vfx.FadeIn(crossfade_duration)])
+
+                # 前のクリップの終わり部分を取得してフェードアウト
+                prev_clip = crossfaded_clips[-1]
+
+                # クリップの長さを調整してオーバーラップさせる
+                # 前のクリップの最後の部分をフェードアウト
+                if prev_clip.duration > crossfade_duration:
+                    # 前のクリップを短縮してフェードアウト部分を作成
+                    prev_clip_main = prev_clip.subclipped(0, prev_clip.duration - crossfade_duration)
+                    prev_clip_fade = prev_clip.subclipped(prev_clip.duration - crossfade_duration, prev_clip.duration)
+                    prev_clip_fade = prev_clip_fade.with_effects([vfx.FadeOut(crossfade_duration)])
+
+                    # 現在のクリップのフェードイン部分と前のクリップのフェードアウト部分を合成
+                    current_clip_fade = clip_with_fadein.subclipped(0, crossfade_duration)
+
+                    # CompositeVideoClipで重ね合わせ
+                    overlapped = CompositeVideoClip([
+                        prev_clip_fade.with_start(0),
+                        current_clip_fade.with_start(0)
+                    ], size=prev_clip_fade.size).with_duration(crossfade_duration)
+
+                    # 現在のクリップの残り部分
+                    current_clip_rest = clip_with_fadein.subclipped(crossfade_duration, clip_with_fadein.duration)
+
+                    # 前のクリップのメイン部分を更新
+                    crossfaded_clips[-1] = prev_clip_main
+                    # オーバーラップ部分を追加
+                    crossfaded_clips.append(overlapped)
+                    # 現在のクリップの残り部分を追加
+                    crossfaded_clips.append(current_clip_rest)
+                else:
+                    # クリップが短すぎる場合は通常の連結
+                    crossfaded_clips.append(clip_with_fadein)
+
+        final_clip = concatenate_videoclips(crossfaded_clips, method="compose")
+    else:
+        print("   全シーンを連結中...")
+        final_clip = concatenate_videoclips(clips, method="compose")
 
     # 出力ファイル名
     output_file = output_dir / f"{book_name}_promotional_video.mp4"

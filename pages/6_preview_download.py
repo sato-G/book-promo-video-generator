@@ -128,7 +128,9 @@ if 'final_video' not in st.session_state:
                     subtitle_colors=st.session_state.get('subtitle_colors', ('FFFFFF', '00FFFF')),
                     use_ken_burns=st.session_state.get('use_ken_burns', False),
                     ken_burns_type=st.session_state.get('ken_burns_type', 'ランダム'),
-                    ken_burns_intensity=st.session_state.get('ken_burns_intensity', 1.15)
+                    ken_burns_intensity=st.session_state.get('ken_burns_intensity', 1.15),
+                    use_crossfade=st.session_state.get('use_crossfade', False),
+                    crossfade_duration=st.session_state.get('crossfade_duration', 0.8)
                 )
 
                 # BGM追加
