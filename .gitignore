@@ -11,6 +11,8 @@ ENV/
 
 # Data directories
 data/
+!data/BGM/
+!data/BGM/*.mp3
 *.epub
 
 # Environment variables
@@ -32,13 +34,15 @@ Thumbs.db
 
 # Temporary files
 *.mp4
-*.mp3
 *.wav
 *.png
 *.jpg
 *.jpeg
 temp-*
 *.ass
+
+# Allow BGM mp3 files
+!data/BGM/*.mp3
 
 # v1 legacy
 v1/
