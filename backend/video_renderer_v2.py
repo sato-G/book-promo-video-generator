@@ -169,37 +169,64 @@ def render_video(
         clips.append(image_clip)
 
     # 全シーンを連結（遷移タイプに応じて）
+    # 重要: ナレーション終了後に映像遷移を開始（字幕とのズレを防ぐ）
     if transition_type == "なし（カット）" or len(clips) <= 1:
         print("   全シーンを連結中（カット）...")
         final_clip = concatenate_videoclips(clips, method="compose")
 
     elif transition_type == "クロスフェード":
         print(f"   全シーンを連結中（クロスフェード: {transition_duration}秒）...")
-        # クロスフェードはconcatenate_videoclipsの機能を使用（音声オーバーラップなし）
-        final_clip = concatenate_videoclips(clips, method="compose", padding=-transition_duration, bg_color=None)
+        # ナレーション終了後にクロスフェード開始
+        transition_clips = []
+        for i, clip in enumerate(clips):
+            if i == 0:
+                # 最初のクリップはそのまま
+                transition_clips.append(clip)
+            else:
+                # 前のクリップの最後にフェードアウトを追加（音声なし）
+                prev_clip = transition_clips[-1]
+
+                # 前のクリップの最後のフレームを使って遷移用の映像のみクリップを作成
+                # 音声は含まない（without_audio）
+                prev_last_frame = prev_clip.to_ImageClip(prev_clip.duration).with_duration(transition_duration)
+                prev_fade = prev_last_frame.with_effects([vfx.FadeOut(transition_duration)])
+
+                # 現在のクリップの最初にフェードインを追加
+                current_first_frame = clip.to_ImageClip(0).with_duration(transition_duration)
+                current_fade = current_first_frame.with_effects([vfx.FadeIn(transition_duration)])
+
+                # クロスフェード部分を合成（音声なし）
+                crossfade = CompositeVideoClip([prev_fade, current_fade], size=prev_fade.size)
+
+                # 前のクリップ + クロスフェード + 現在のクリップを連結
+                transition_clips.append(crossfade)
+                transition_clips.append(clip)
+
+        final_clip = concatenate_videoclips(transition_clips, method="compose")
 
     elif transition_type == "スライド":
         print(f"   全シーンを連結中（スライド: {transition_duration}秒）...")
-        # スライド遷移
+        # ナレーション終了後にスライド開始
         transition_clips = []
         for i, clip in enumerate(clips):
             if i == 0:
                 transition_clips.append(clip)
             else:
-                # 前のクリップにフェードアウト、現在のクリップにスライドイン
+                # 前のクリップの最後のフレームでフェードアウト（音声なし）
                 prev_clip = transition_clips[-1]
+                prev_last_frame = prev_clip.to_ImageClip(prev_clip.duration).with_duration(transition_duration)
+                prev_fade = prev_last_frame.with_effects([vfx.FadeOut(transition_duration)])
 
-                # 前のクリップの最後にフェードアウトを追加
-                if prev_clip.duration > transition_duration:
-                    prev_main = prev_clip.subclipped(0, prev_clip.duration - transition_duration)
-                    prev_fade = prev_clip.subclipped(prev_clip.duration - transition_duration, prev_clip.duration).with_effects([vfx.FadeOut(transition_duration)])
-                    transition_clips[-1] = concatenate_videoclips([prev_main, prev_fade], method="compose")
-
-                # 現在のクリップにスライドイン効果
-                # 左からスライド
+                # 現在のクリップの最初のフレームでスライドイン（音声なし）
                 w, h = clip.size
-                slide_clip = clip.with_position(lambda t: (w * max(0, 1 - t / transition_duration) if t < transition_duration else 0, 0))
-                transition_clips.append(slide_clip)
+                current_first_frame = clip.to_ImageClip(0).with_duration(transition_duration)
+                current_slide = current_first_frame.with_position(lambda t: (int(w * (1 - t / transition_duration)), 0))
+
+                # スライド部分を合成（音声なし）
+                slide_transition = CompositeVideoClip([prev_fade, current_slide], size=(w, h))
+
+                transition_clips.append(slide_transition)
+                transition_clips.append(clip)
 
         final_clip = concatenate_videoclips(transition_clips, method="compose")
 
