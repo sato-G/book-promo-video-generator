@@ -16,7 +16,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def split_into_scenes(scenario: Dict[str, Any], num_scenes: int = 5) -> List[Dict[str, Any]]:
+def split_into_scenes(
+    scenario: Dict[str, Any], num_scenes: int = 5
+) -> List[Dict[str, Any]]:
     """
     シナリオを複数のシーンに分割
 
@@ -34,13 +36,13 @@ def split_into_scenes(scenario: Dict[str, Any], num_scenes: int = 5) -> List[Dic
         raise ValueError("GOOGLE_API_KEY環境変数が設定されていません")
 
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-2.5-flash-lite')
+    model = genai.GenerativeModel("gemini-2.5-flash-lite")
 
     # シナリオテキスト
-    summary = scenario['selected_pattern']['summary']
-    book_name = scenario['book_name']
-    visual_style = scenario.get('visual_style', 'Cinematic')
-    aspect_ratio = scenario.get('aspect_ratio', '9:16')
+    summary = scenario["selected_pattern"]["summary"]
+    book_name = scenario["book_name"]
+    visual_style = scenario.get("visual_style", "Cinematic")
+    aspect_ratio = scenario.get("aspect_ratio", "9:16")
 
     # シナリオの文字数を取得
     scenario_length = len(summary)
@@ -112,12 +114,12 @@ JSON形式で出力してください。
         prompt,
         generation_config={
             "temperature": 0.7,
-            "response_mime_type": "application/json"
-        }
+            "response_mime_type": "application/json",
+        },
     )
 
     result = json.loads(response.text)
-    scenes = result['scenes']
+    scenes = result["scenes"]
 
     print(f"  ✓ {len(scenes)}シーンに分割完了")
 
@@ -146,7 +148,7 @@ def save_scenes(scenes: List[Dict[str, Any]], book_name: str) -> Path:
     scenes_data = {
         "book_name": book_name,
         "scenes": scenes,
-        "total_scenes": len(scenes)
+        "total_scenes": len(scenes),
     }
 
     save_json(scenes_file, scenes_data)

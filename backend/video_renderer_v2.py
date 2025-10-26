@@ -20,6 +20,7 @@ from moviepy import (
 from moviepy import vfx
 
 from . import subtitle_generator
+import random
 
 
 def get_project_root() -> Path:
@@ -27,10 +28,61 @@ def get_project_root() -> Path:
     return Path(__file__).parent.parent
 
 
+def apply_ken_burns_effect(clip, effect_type: str = "zoom_in", intensity: float = 1.15):
+    """
+    Ken Burnsエフェクトを適用（ズーム＆パン）
+
+    Args:
+        clip: ImageClip
+        effect_type: "zoom_in", "zoom_out", "pan_left", "pan_right", "random"
+        intensity: 拡大率（1.0～1.3推奨）
+
+    Returns:
+        エフェクト適用後のクリップ
+    """
+    if effect_type == "random":
+        effect_type = random.choice(["zoom_in", "zoom_out", "pan_left", "pan_right"])
+
+    w, h = clip.size
+    duration = clip.duration
+
+    if effect_type == "zoom_in":
+        # ズームイン: 小→大
+        # resizeを時間関数として使用
+        zoomed_clip = clip.resized(lambda t: 1.0 + (intensity - 1.0) * (t / duration))
+        return zoomed_clip
+
+    elif effect_type == "zoom_out":
+        # ズームアウト: 大→小
+        zoomed_clip = clip.resized(lambda t: intensity - (intensity - 1.0) * (t / duration))
+        return zoomed_clip
+
+    elif effect_type == "pan_left":
+        # 左→右パン（画像を拡大して左から右に移動）
+        # 画像を拡大してから位置を動かす
+        scaled_clip = clip.resized(intensity)
+        # 左端から右端へ移動
+        pan_offset = int(w * (intensity - 1))
+        panned_clip = scaled_clip.with_position(lambda t: (-pan_offset + int(pan_offset * t / duration), "center"))
+        return CompositeVideoClip([panned_clip], size=(w, h))
+
+    elif effect_type == "pan_right":
+        # 右→左パン（画像を拡大して右から左に移動）
+        scaled_clip = clip.resized(intensity)
+        pan_offset = int(w * (intensity - 1))
+        panned_clip = scaled_clip.with_position(lambda t: (-int(pan_offset * t / duration), "center"))
+        return CompositeVideoClip([panned_clip], size=(w, h))
+
+    return clip
+
+
 def render_video(
     storyboard_data: Dict[str, Any],
     subtitle_type: str = "normal",
-    subtitle_colors: tuple = ("FFFFFF", "00FFFF")
+    subtitle_colors: tuple = ("FFFFFF", "00FFFF"),
+    use_ken_burns: bool = False,
+    ken_burns_type: str = "random",
+    ken_burns_intensity: float = 1.15
 ) -> Dict[str, Any]:
     """
     ストーリーボードから動画を作成（字幕付き）
@@ -87,6 +139,21 @@ def render_video(
 
         # 画像クリップ作成（音声の長さに合わせる）
         image_clip = ImageClip(str(image_file)).with_duration(duration)
+
+        # Ken Burnsエフェクトを適用
+        if use_ken_burns:
+            # エフェクトタイプを日本語から英語に変換
+            effect_mapping = {
+                "ズームイン": "zoom_in",
+                "ズームアウト": "zoom_out",
+                "左→右パン": "pan_left",
+                "右→左パン": "pan_right",
+                "ランダム": "random"
+            }
+            effect_type_en = effect_mapping.get(ken_burns_type, "random")
+
+            print(f"     Ken Burnsエフェクト適用: {ken_burns_type} (強度: {ken_burns_intensity})")
+            image_clip = apply_ken_burns_effect(image_clip, effect_type_en, ken_burns_intensity)
 
         # 音声を設定
         image_clip = image_clip.with_audio(audio_clip)

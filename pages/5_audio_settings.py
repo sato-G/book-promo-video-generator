@@ -282,6 +282,45 @@ with st.container():
     st.session_state.selected_bgm = str(selected_bgm) if selected_bgm else None
     st.session_state.bgm_volume = bgm_volume
 
+# Ken Burnsエフェクト設定
+st.markdown("---")
+st.subheader("🎬 映像エフェクト")
+
+with st.container():
+    use_ken_burns = st.checkbox(
+        "Ken Burnsエフェクトを適用（画像にズーム＆パン効果）",
+        value=True,
+        help="静止画像にゆっくりとしたズームとパンの動きを追加します。ショート動画っぽい雰囲気になります。"
+    )
+
+    if use_ken_burns:
+        col_kb1, col_kb2 = st.columns(2)
+
+        with col_kb1:
+            ken_burns_type = st.radio(
+                "エフェクトタイプ",
+                ["ズームイン", "ズームアウト", "左→右パン", "右→左パン", "ランダム"],
+                index=4,
+                help="ランダム: 各シーンで異なる動きを自動選択"
+            )
+
+        with col_kb2:
+            ken_burns_intensity = st.slider(
+                "エフェクトの強さ",
+                min_value=1.0,
+                max_value=1.3,
+                value=1.15,
+                step=0.05,
+                help="1.0 = 動きなし、1.3 = 大きな動き"
+            )
+            st.caption(f"拡大率: {int((ken_burns_intensity - 1) * 100)}%")
+
+    # 設定を保存
+    st.session_state.use_ken_burns = use_ken_burns
+    if use_ken_burns:
+        st.session_state.ken_burns_type = ken_burns_type
+        st.session_state.ken_burns_intensity = ken_burns_intensity
+
 # 次へ進むボタン
 st.markdown("---")
 

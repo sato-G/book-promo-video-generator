@@ -125,7 +125,10 @@ if 'final_video' not in st.session_state:
                 video_data = video_renderer_v2.render_video(
                     storyboard_data,
                     subtitle_type=st.session_state.get('subtitle_type', 'normal'),
-                    subtitle_colors=st.session_state.get('subtitle_colors', ('FFFFFF', '00FFFF'))
+                    subtitle_colors=st.session_state.get('subtitle_colors', ('FFFFFF', '00FFFF')),
+                    use_ken_burns=st.session_state.get('use_ken_burns', False),
+                    ken_burns_type=st.session_state.get('ken_burns_type', 'ランダム'),
+                    ken_burns_intensity=st.session_state.get('ken_burns_intensity', 1.15)
                 )
 
                 # BGM追加
