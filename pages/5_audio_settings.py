@@ -235,11 +235,24 @@ with st.container():
         col_bgm1, col_bgm2 = st.columns([2, 1])
 
         with col_bgm1:
-            bgm_names = [f.name for f in bgm_files]
-            selected_bgm_name = st.selectbox(
-                "BGMを選択",
-                bgm_names,
-                help="動画に追加するBGMファイル"
+            st.markdown("**BGMを選択**")
+
+            # BGM名から表示用の名前を作成
+            bgm_display_names = {
+                "natsuyasuminotanken.mp3": "🌻 夏休みの探検 - 明るく軽快",
+                "neonpurple.mp3": "💜 ネオンパープル - モダンでクール",
+                "yoiyaminoseaside.mp3": "🌊 宵闇のシーサイド - 落ち着いた雰囲気",
+                "yume.mp3": "💭 夢 - 柔らかく幻想的"
+            }
+
+            # BGM選択（ラジオボタン）
+            bgm_options = [f.name for f in bgm_files]
+            selected_bgm_name = st.radio(
+                "BGM選択",
+                options=bgm_options,
+                format_func=lambda x: bgm_display_names.get(x, x),
+                index=0,
+                label_visibility="collapsed"
             )
 
             selected_bgm = next(f for f in bgm_files if f.name == selected_bgm_name)

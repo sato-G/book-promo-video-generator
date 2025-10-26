@@ -72,12 +72,26 @@ if not st.session_state.get('scenarios'):
     from backend import session_manager
     saved_session = session_manager.load_session_state(book_analysis['book_name'])
     if saved_session and saved_session.get('scenarios'):
-        if st.info("💾 前回のセッションが見つかりました"):
-            if st.button("📂 前回のシナリオを復元", use_container_width=True):
+        st.info("💾 前回のセッションが見つかりました")
+        col_restore1, col_restore2 = st.columns(2)
+        with col_restore1:
+            if st.button("📂 前回のシナリオを復元", use_container_width=True, type="primary"):
                 st.session_state.scenarios = saved_session.get('scenarios')
                 if saved_session.get('selected_scenario'):
                     st.session_state.selected_scenario = saved_session.get('selected_scenario')
+                if saved_session.get('selected_pattern_id'):
+                    st.session_state.selected_pattern_id = saved_session.get('selected_pattern_id')
+                if saved_session.get('aspect_ratio'):
+                    st.session_state.aspect_ratio = saved_session.get('aspect_ratio')
+                if saved_session.get('visual_style'):
+                    st.session_state.visual_style = saved_session.get('visual_style')
+                if saved_session.get('num_scenes'):
+                    st.session_state.num_scenes = saved_session.get('num_scenes')
                 st.rerun()
+        with col_restore2:
+            if st.button("🆕 新しくシナリオを生成", use_container_width=True):
+                # 何もせず通常フローへ
+                pass
 
 # シナリオ生成
 st.markdown("---")
@@ -110,6 +124,13 @@ if not st.session_state.get('scenarios'):
                 scenario_generator_v2.save_scenarios(book_analysis['book_name'], patterns)
 
                 st.session_state.scenarios = patterns
+
+                # セッション保存
+                from backend import session_manager
+                session_manager.save_session_state({
+                    'book_analysis': book_analysis,
+                    'scenarios': patterns
+                }, book_analysis['book_name'])
 
                 st.success(f"✅ {len(patterns)}個のシナリオパターンを生成しました！")
                 st.balloons()
@@ -264,6 +285,18 @@ if st.session_state.get('scenarios'):
             )
             st.session_state.selected_scenario = scenario_data
             st.session_state.current_step = 3
+
+            # セッション保存
+            from backend import session_manager
+            session_manager.save_session_state({
+                'book_analysis': book_analysis,
+                'scenarios': st.session_state.scenarios,
+                'selected_scenario': scenario_data,
+                'selected_pattern_id': st.session_state.selected_pattern_id,
+                'aspect_ratio': st.session_state.aspect_ratio,
+                'visual_style': st.session_state.visual_style,
+                'num_scenes': st.session_state.num_scenes
+            }, book_analysis['book_name'])
 
             st.success("✅ 設定を保存しました")
             st.switch_page("pages/3_storyboard.py")
