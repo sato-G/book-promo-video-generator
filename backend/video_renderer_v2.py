@@ -29,7 +29,8 @@ def get_project_root() -> Path:
 
 def render_video(
     storyboard_data: Dict[str, Any],
-    subtitle_type: str = "normal"
+    subtitle_type: str = "normal",
+    subtitle_colors: tuple = ("FFFFFF", "00FFFF")
 ) -> Dict[str, Any]:
     """
     ストーリーボードから動画を作成（字幕付き）
@@ -131,7 +132,8 @@ def render_video(
             output_file,
             scenes,
             subtitle_type,
-            storyboard_data.get('aspect_ratio', '9:16')
+            storyboard_data.get('aspect_ratio', '9:16'),
+            subtitle_colors
         )
     else:
         final_output_file = output_file
@@ -153,7 +155,8 @@ def add_subtitles_to_video(
     video_file: Path,
     scenes: List[Dict[str, Any]],
     subtitle_type: str,
-    aspect_ratio: str = "9:16"
+    aspect_ratio: str = "9:16",
+    subtitle_colors: tuple = ("FFFFFF", "00FFFF")
 ) -> Path:
     """
     動画にASS字幕を追加
@@ -177,7 +180,8 @@ def add_subtitles_to_video(
             scenes,
             subtitle_file,
             max_chars=15,
-            aspect_ratio=aspect_ratio
+            aspect_ratio=aspect_ratio,
+            colors=subtitle_colors
         )
     else:
         subtitle_generator.create_normal_subtitle_file(

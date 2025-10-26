@@ -42,14 +42,18 @@ def split_into_scenes(scenario: Dict[str, Any], num_scenes: int = 5) -> List[Dic
     visual_style = scenario.get('visual_style', 'Cinematic')
     aspect_ratio = scenario.get('aspect_ratio', '9:16')
 
+    # シナリオの文字数を取得
+    scenario_length = len(summary)
+    chars_per_scene = scenario_length // num_scenes
+
     prompt = f"""
 以下の書籍紹介シナリオを、{num_scenes}つのシーンに分割してください。
-各シーンには、ナレーション内容と画像生成用のプロンプトを含めます。
+**重要: シナリオの内容を削除・省略せず、全文を{num_scenes}個のシーンに分割してください。**
 
 ## 書籍名
 {book_name}
 
-## シナリオ
+## シナリオ（全文）
 {summary}
 
 ## 動画設定
@@ -60,18 +64,21 @@ def split_into_scenes(scenario: Dict[str, Any], num_scenes: int = 5) -> List[Dic
 
 ## タスク
 
-このシナリオを{num_scenes}つのシーンに分割し、各シーンに以下を含めてください：
+このシナリオ全文（{scenario_length}文字）を{num_scenes}つのシーンに分割し、各シーンに以下を含めてください：
 
 1. **シーン番号** (1-{num_scenes})
-2. **ナレーションテキスト** (100-150文字程度、自然な区切り)
-   - 各シーンのナレーションは十分な情報量を持つ
-   - 1シーンあたり8-12秒程度の読み上げ時間
+2. **ナレーションテキスト**
+   - **必ずシナリオ全文を使用し、内容を削除・省略しないこと**
+   - 文字数や句読点の位置で自然に分割する
+   - 1シーンあたり約{chars_per_scene}文字を目安とする
+   - 区切りのいいところ（句点「。」の後）で分割する
 3. **画像プロンプト** (DALL-E 3用、英語、{visual_style}スタイルを反映)
-4. **推定時間** (秒、ナレーション文字数から自動計算: 文字数÷12秒)
+4. **推定時間** (秒、ナレーション文字数÷10で計算)
 
-## 要件
+## 重要な要件
 
-- ナレーションは自然な流れで分割する
+- **シナリオの内容を一切カットしない**（全文を必ず使用）
+- ナレーションは自然な流れで分割する（句読点を考慮）
 - 各シーンは独立して意味が通じるように
 - 画像プロンプトはシーンの内容を視覚的に表現し、具体的なビジュアル要素を含める
 - **{visual_style}スタイルに完全に適合した画像プロンプトを作成**
@@ -81,7 +88,6 @@ def split_into_scenes(scenario: Dict[str, Any], num_scenes: int = 5) -> List[Dic
   - Picture book: 絵本風、優しい色合い、シンプルなフォルム
   - Illustration: イラスト調、芸術的、スタイライズ
 - 画像プロンプトは詳細に記述（50-100語の英語）
-- 合計時間は45-60秒程度
 
 ---
 
@@ -92,7 +98,7 @@ JSON形式で出力してください。
   "scenes": [
     {{
       "scene_number": 1,
-      "narration": "ナレーション文",
+      "narration": "シナリオから抽出したナレーション文（カットなし）",
       "image_prompt": "DALL-E prompt in English with {visual_style} style",
       "duration_seconds": 推定秒数
     }},

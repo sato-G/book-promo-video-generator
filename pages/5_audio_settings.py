@@ -70,32 +70,45 @@ st.subheader("🎤 ナレーション音声生成")
 
 with st.container():
     # 音声設定
-    col1, col2, col3 = st.columns(3)
+    st.markdown("### 🎙️ 音声設定")
+
+    col1, col2 = st.columns([2, 1])
 
     with col1:
-        voice_model = st.selectbox(
-            "音声モデル",
-            ["tts-1", "tts-1-hd"],
-            index=1,
-            help="tts-1-hd: 高品質（推奨）"
+        st.markdown("**声の種類を選択**")
+
+        voice_descriptions = {
+            "nova": "🌟 Nova - 明るく活発な女性の声（日本語推奨）",
+            "shimmer": "✨ Shimmer - 柔らかく落ち着いた女性の声",
+            "alloy": "⚖️ Alloy - 中性的でバランスの取れた声",
+            "echo": "🎭 Echo - 落ち着いた男性の声",
+            "fable": "🎩 Fable - イギリス英語風の男性の声",
+            "onyx": "💼 Onyx - 力強く深みのある男性の声"
+        }
+
+        voice_name = st.radio(
+            "声の種類",
+            options=["nova", "shimmer", "alloy", "echo", "fable", "onyx"],
+            format_func=lambda x: voice_descriptions[x],
+            index=0,  # nova
+            label_visibility="collapsed"
         )
 
     with col2:
-        voice_name = st.selectbox(
-            "声の種類",
-            ["alloy", "echo", "fable", "onyx", "nova", "shimmer"],
-            index=4,  # nova
-            help="nova: 女性的で明るい声（日本語推奨）"
+        voice_model = st.selectbox(
+            "音質",
+            ["tts-1-hd", "tts-1"],
+            index=0,
+            help="tts-1-hd: 高品質（推奨）\ntts-1: 標準品質（高速）"
         )
 
-    with col3:
         voice_speed = st.slider(
-            "速度",
+            "読み上げ速度",
             min_value=0.5,
             max_value=2.0,
             value=1.2,
             step=0.1,
-            help="1.0 = 通常速度"
+            help="1.0 = 通常速度、1.2 = やや速め（推奨）"
         )
 
     st.markdown("---")
@@ -175,30 +188,53 @@ st.markdown("---")
 st.subheader("📝 字幕設定")
 
 with st.container():
-    subtitle_type = st.radio(
-        "字幕タイプ",
-        ["カラオケ字幕（文字単位で白→黄色）", "通常字幕（シンプル表示）"],
-        key="subtitle_type_radio"
-    )
+    col_sub1, col_sub2 = st.columns(2)
 
-    subtitle_type_value = "karaoke" if subtitle_type.startswith("カラオケ") else "normal"
-    st.session_state.subtitle_type = subtitle_type_value
+    with col_sub1:
+        subtitle_type = st.radio(
+            "字幕タイプ",
+            ["カラオケ字幕（文字単位でハイライト）", "通常字幕（シンプル表示）"],
+            key="subtitle_type_radio"
+        )
+
+        subtitle_type_value = "karaoke" if subtitle_type.startswith("カラオケ") else "normal"
+        st.session_state.subtitle_type = subtitle_type_value
+
+    with col_sub2:
+        subtitle_color = st.radio(
+            "字幕色",
+            ["白色 → 黄色", "白色 → 水色", "白色 → ピンク", "白色のみ"],
+            index=0,
+            help="カラオケ字幕のハイライトカラー"
+        )
+
+        # 色の設定を保存
+        color_mapping = {
+            "白色 → 黄色": ("FFFFFF", "00FFFF"),  # 白→黄
+            "白色 → 水色": ("FFFFFF", "FFFF00"),  # 白→シアン
+            "白色 → ピンク": ("FFFFFF", "FF69B4"),  # 白→ピンク
+            "白色のみ": ("FFFFFF", "FFFFFF")  # 白→白
+        }
+
+        st.session_state.subtitle_colors = color_mapping[subtitle_color]
 
 # BGM設定
 st.markdown("---")
-st.subheader("🎵 BGM設定（オプション）")
+st.subheader("🎵 BGM設定")
 
 with st.container():
-    use_bgm = st.checkbox("BGMを追加する", value=False)
+    use_bgm = st.checkbox("BGMを追加する", value=True, help="デフォルトで有効")
 
     selected_bgm = None
     bgm_volume = 0.15
 
-    if use_bgm:
-        # BGMファイル一覧取得
-        bgm_files = bgm_manager_v2.list_available_bgm()
+    # BGMファイル一覧取得（常に表示）
+    bgm_files = bgm_manager_v2.list_available_bgm()
 
-        if bgm_files:
+    if bgm_files and use_bgm:
+        col_bgm1, col_bgm2 = st.columns([2, 1])
+
+        with col_bgm1:
             bgm_names = [f.name for f in bgm_files]
             selected_bgm_name = st.selectbox(
                 "BGMを選択",
@@ -208,6 +244,11 @@ with st.container():
 
             selected_bgm = next(f for f in bgm_files if f.name == selected_bgm_name)
 
+            # プレビュー
+            if selected_bgm.exists():
+                st.audio(str(selected_bgm))
+
+        with col_bgm2:
             # 音量調整
             bgm_volume = st.slider(
                 "BGM音量",
@@ -218,11 +259,10 @@ with st.container():
                 help="0.0 = 無音、1.0 = 最大音量"
             )
 
-            # プレビュー
-            if selected_bgm.exists():
-                st.audio(str(selected_bgm))
-        else:
-            st.warning("⚠️ BGMファイルが見つかりません")
+            st.metric("音量レベル", f"{int(bgm_volume * 100)}%")
+
+    elif not bgm_files:
+        st.warning("⚠️ BGMファイルが見つかりません")
 
     # 設定を保存
     st.session_state.use_bgm = use_bgm

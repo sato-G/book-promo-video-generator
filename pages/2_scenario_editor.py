@@ -67,6 +67,18 @@ if not st.session_state.get('book_analysis'):
 book_analysis = st.session_state.book_analysis
 st.info(f"📁 書籍: **{book_analysis['book_name']}**")
 
+# セッション復元機能
+if not st.session_state.get('scenarios'):
+    from backend import session_manager
+    saved_session = session_manager.load_session_state(book_analysis['book_name'])
+    if saved_session and saved_session.get('scenarios'):
+        if st.info("💾 前回のセッションが見つかりました"):
+            if st.button("📂 前回のシナリオを復元", use_container_width=True):
+                st.session_state.scenarios = saved_session.get('scenarios')
+                if saved_session.get('selected_scenario'):
+                    st.session_state.selected_scenario = saved_session.get('selected_scenario')
+                st.rerun()
+
 # シナリオ生成
 st.markdown("---")
 st.subheader("🤖 AI分析")

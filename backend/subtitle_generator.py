@@ -70,7 +70,8 @@ def create_karaoke_subtitle_file(
     scenes: List[Dict[str, Any]],
     output_file: Path,
     max_chars: int = 15,
-    aspect_ratio: str = "9:16"
+    aspect_ratio: str = "9:16",
+    colors: tuple = ("FFFFFF", "00FFFF")
 ) -> None:
     """
     ASS形式のカラオケ字幕ファイルを作成
@@ -157,17 +158,20 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     event_end = event_start + char_duration
 
                 # 字幕テキスト生成（カラオケ効果）
+                white_color = colors[0]
+                highlight_color = colors[1]
+
                 if char_idx == 0:
                     # 全部白
-                    subtitle_text = f"{{\\c&HFFFFFF&}}{chunk}"
+                    subtitle_text = f"{{\\c&H{white_color}&}}{chunk}"
                 elif char_idx >= total_chars:
-                    # 全部黄色
-                    subtitle_text = f"{{\\c&H00FFFF&}}{chunk}"
+                    # 全部ハイライト色
+                    subtitle_text = f"{{\\c&H{highlight_color}&}}{chunk}"
                 else:
-                    # 一部が黄色、残りが白
-                    yellow_part = chunk[:char_idx]
+                    # 一部がハイライト色、残りが白
+                    highlight_part = chunk[:char_idx]
                     white_part = chunk[char_idx:]
-                    subtitle_text = f"{{\\c&H00FFFF&}}{yellow_part}{{\\c&HFFFFFF&}}{white_part}"
+                    subtitle_text = f"{{\\c&H{highlight_color}&}}{highlight_part}{{\\c&H{white_color}&}}{white_part}"
 
                 event_start_str = format_time(event_start)
                 event_end_str = format_time(event_end)

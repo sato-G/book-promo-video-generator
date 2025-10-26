@@ -124,7 +124,8 @@ if 'final_video' not in st.session_state:
                 # 動画レンダリング（v2使用）
                 video_data = video_renderer_v2.render_video(
                     storyboard_data,
-                    subtitle_type=st.session_state.get('subtitle_type', 'normal')
+                    subtitle_type=st.session_state.get('subtitle_type', 'normal'),
+                    subtitle_colors=st.session_state.get('subtitle_colors', ('FFFFFF', '00FFFF'))
                 )
 
                 # BGM追加
@@ -155,38 +156,6 @@ else:
 
     video_data = st.session_state.final_video
     video_file = Path(video_data['video_file'])
-
-    # 完成メッセージ
-    st.markdown("---")
-    with st.container():
-        st.markdown("## 🎊 おめでとうございます！")
-        st.markdown("書籍プロモーション動画が完成しました")
-
-    # プロジェクト情報
-    st.markdown("---")
-    st.subheader("📊 プロジェクト情報")
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.metric("書籍名", scenario['book_name'])
-
-    with col2:
-        st.metric("パターン", scenario['selected_pattern']['pattern_name'])
-
-    with col3:
-        st.metric("シーン数", len(scenes))
-
-    # 動画設定
-    col4, col5 = st.columns(2)
-
-    with col4:
-        subtitle_display = "カラオケ字幕" if st.session_state.get('subtitle_type') == 'karaoke' else "通常字幕"
-        st.metric("字幕", subtitle_display)
-
-    with col5:
-        bgm_status = "✅ あり" if video_data.get('has_bgm') else "❌ なし"
-        st.metric("BGM", bgm_status)
 
     # 動画プレビュー
     st.markdown("---")
@@ -268,24 +237,3 @@ else:
                 del st.session_state[key]
             st.session_state.current_step = 1
             st.switch_page("pages/1_upload_epub.py")
-
-    # フィードバックセクション
-    st.markdown("---")
-    st.subheader("💬 フィードバック")
-
-    with st.expander("動画の品質について"):
-        quality_rating = st.slider("動画の品質", 1, 5, 3)
-        feedback_text = st.text_area("コメント（任意）", placeholder="改善点やご意見をお聞かせください")
-
-        if st.button("送信"):
-            st.success("✅ フィードバックありがとうございました！")
-
-    # 完成の祝福
-    st.markdown("---")
-    st.markdown("""
-    <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 1rem;">
-        <h2>🎉 プロジェクト完了！</h2>
-        <p>素晴らしいプロモーション動画が完成しました</p>
-        <p>📚 → 📝 → 🎬 → 🎨 → 🎤 → 🎉</p>
-    </div>
-    """, unsafe_allow_html=True)
