@@ -63,7 +63,22 @@ if not st.session_state.get('selected_scenario'):
 scenario = st.session_state.selected_scenario
 num_scenes = st.session_state.get('num_scenes', 5)
 
-st.info(f"📁 書籍: **{scenario['book_name']}** | シナリオ: **{scenario['selected_pattern']['pattern_name']}** | シーン数: {num_scenes}")
+# 現在の設定を表示
+col_info, col_edit_settings = st.columns([4, 1])
+
+with col_info:
+    st.info(f"📁 書籍: **{scenario['book_name']}** | シナリオ: **{scenario['selected_pattern']['pattern_name']}** | シーン数: {num_scenes}")
+    st.caption(f"ビジュアルスタイル: {scenario.get('visual_style', 'Cinematic')} | アスペクト比: {scenario.get('aspect_ratio', '9:16')}")
+
+with col_edit_settings:
+    if st.button("⚙️ 設定変更", use_container_width=True, help="Step 2に戻って設定を変更"):
+        # シーンと画像を削除してStep 2に戻る
+        if 'scenes' in st.session_state:
+            del st.session_state.scenes
+        if 'scene_images' in st.session_state:
+            del st.session_state.scene_images
+        st.session_state.current_step = 2
+        st.switch_page("pages/2_scenario_editor.py")
 
 # 自動シーン分割＆画像生成
 if 'scenes' not in st.session_state:
@@ -155,7 +170,30 @@ if 'scenes' not in st.session_state:
 
 # シーン一覧表示＆編集
 st.markdown("---")
-st.subheader("🎬 シーン一覧")
+
+# ヘッダーと再生成ボタン
+col_header, col_regen = st.columns([3, 1])
+
+with col_header:
+    st.subheader("🎬 シーン一覧")
+
+with col_regen:
+    if st.button("🔄 ストーリーボード再生成", use_container_width=True, help="Step 2の設定で新しくシーンと画像を生成"):
+        # 確認ダイアログ
+        st.warning("⚠️ 現在のシーンと画像がすべて削除され、新しく生成されます。")
+        col_confirm1, col_confirm2 = st.columns(2)
+        with col_confirm1:
+            if st.button("✅ はい、再生成する", type="primary", use_container_width=True):
+                # セッションから削除
+                if 'scenes' in st.session_state:
+                    del st.session_state.scenes
+                if 'scene_images' in st.session_state:
+                    del st.session_state.scene_images
+                st.rerun()
+        with col_confirm2:
+            if st.button("❌ キャンセル", use_container_width=True):
+                st.rerun()
+        st.stop()
 
 scenes = st.session_state.scenes
 total_duration = sum(scene['duration_seconds'] for scene in scenes)
