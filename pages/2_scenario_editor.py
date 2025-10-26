@@ -60,6 +60,43 @@ with st.sidebar:
 # 前提チェック
 if not st.session_state.get('book_analysis'):
     st.warning("⚠️ 先にEPUBファイルをアップロードしてください")
+
+    # セッション復元を試みる
+    from backend import session_manager, utils
+    project_root = utils.get_project_root()
+    sessions_dir = project_root / "data" / "internal" / "sessions"
+
+    if sessions_dir.exists():
+        session_files = list(sessions_dir.glob("session_*_latest.json"))
+        if session_files:
+            # 最新のセッションファイルを取得
+            latest_session_file = max(session_files, key=lambda p: p.stat().st_mtime)
+            book_name = latest_session_file.stem.replace('session_', '').replace('_latest', '')
+
+            st.info(f"💾 前回のセッションが見つかりました: **{book_name}**")
+            col_r1, col_r2 = st.columns(2)
+
+            with col_r1:
+                if st.button("📂 セッションを復元", use_container_width=True, type="primary"):
+                    saved_session = session_manager.load_session_state(book_name)
+                    if saved_session:
+                        # book_analysisを復元
+                        if saved_session.get('book_analysis'):
+                            st.session_state.book_analysis = saved_session['book_analysis']
+                        # その他のデータも復元
+                        if saved_session.get('scenarios'):
+                            st.session_state.scenarios = saved_session['scenarios']
+                        if saved_session.get('selected_scenario'):
+                            st.session_state.selected_scenario = saved_session['selected_scenario']
+                        st.success("✅ セッションを復元しました")
+                        st.rerun()
+
+            with col_r2:
+                if st.button("← EPUBアップロードへ", use_container_width=True):
+                    st.switch_page("pages/1_upload_epub.py")
+
+            st.stop()
+
     if st.button("← EPUBアップロードへ"):
         st.switch_page("pages/1_upload_epub.py")
     st.stop()
