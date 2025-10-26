@@ -323,28 +323,30 @@ with st.container():
 
     st.markdown("---")
 
-    # クロスフェード遷移設定
-    use_crossfade = st.checkbox(
-        "シーン間にクロスフェード遷移を追加",
-        value=True,
-        help="シーンとシーンの切り替わりを滑らかにします"
+    # シーン遷移設定
+    st.markdown("**シーン間の遷移エフェクト**")
+
+    transition_type = st.radio(
+        "遷移タイプ",
+        ["なし（カット）", "クロスフェード", "スライド"],
+        index=1,  # デフォルトはクロスフェード
+        help="シーンからシーンへの切り替わり方を選択"
     )
 
-    if use_crossfade:
-        crossfade_duration = st.slider(
-            "クロスフェード時間（秒）",
+    transition_duration = 0.0
+    if transition_type != "なし（カット）":
+        transition_duration = st.slider(
+            "遷移時間（秒）",
             min_value=0.3,
             max_value=2.0,
             value=0.8,
             step=0.1,
-            help="シーン間の重なり時間"
+            help="遷移エフェクトの長さ"
         )
-    else:
-        crossfade_duration = 0.0
 
     # 設定を保存
-    st.session_state.use_crossfade = use_crossfade
-    st.session_state.crossfade_duration = crossfade_duration
+    st.session_state.transition_type = transition_type
+    st.session_state.transition_duration = transition_duration
 
 # 次へ進むボタン
 st.markdown("---")
